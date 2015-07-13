@@ -12,12 +12,19 @@ if File.directory?("#{dest_dir}/db") == false
   system "mkdir -p #{dest_dir}/db"
 end
 
+if File.directory?("#{dest_dir}/math") == false
+  system "mkdir -p #{dest_dir}/math"
+end
+
 libs = Array.new
 
 libs.push "lib/controller.rb"
 libs.push "lib/date_tool.rb"
+libs.push "lib/utility.rb"
+libs.push "lib/analyzer.rb"
 libs.push "data/config"
-libs.push "data/schema"
+system    "cp -r data/schema/* #{dest_dir}/schema"
+system    "cp -r lib/math/* #{dest_dir}/math"
 
 main_name  = "vest"
 main_dest  = "/usr/local/bin/#{main_name}"

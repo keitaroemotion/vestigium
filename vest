@@ -3,6 +3,8 @@
 require 'colorize'
 require '/usr/local/etc/vestigium/controller'
 require '/usr/local/etc/vestigium/date_tool'
+require '/usr/local/etc/vestigium/utility'
+require '/usr/local/etc/vestigium/analyzer'
 
 # import log with File.IO
 # Read from target directory
@@ -13,30 +15,6 @@ $config = "#{$rootdir}/config"
 $schema = "#{$rootdir}/schema"
 $db = "#{$rootdir}/db"
 
-def color_print(text, color)
-  if text != nil
-    case color
-    when "green"
-      print text.green
-    when "yellow"
-      print text.yellow
-    else
-      print text
-    end
-  end
-end
-
-def file_to_map(config_path)
-  hash = Hash.new
-  File.open(config_path, "r").each do |line|
-    if line.include? "="
-      tokens = line.split('=')
-      hash[tokens[0].strip.chomp] = tokens[1].strip.chomp
-    end
-  end
-  return hash
-end
-
 $config = file_to_map $config
 $target_dir = $config["target_dir"]
 
@@ -44,97 +22,32 @@ def format_target_dir()
   return "#{$target_dir}/*".gsub("//","/")
 end
 
-def reflect_schema(schema_id)
-  schemainfo = Hash.new
-  File.open($schema).each do |line|
-    tokens = line.split('=')
-    key = tokens[0]
-    content = tokens[1]
-    if (key == nil) || (content == nil)
-    else
-      if schema_id.strip == key.strip
-        content.split('|').each do |c|
-          ctokens = c.split(' ')
-          if ctokens.size > 1
-            schemainfo[ctokens[1].strip.to_i] = ctokens[0].strip
-          end
-        end
-      end
-     end
-    end
-  return schemainfo
-end
-
-def read_log(file, scheme_id)
-  table_creation_query = "create table #{scheme_id} ( "
-
-  schema =  reflect_schema scheme_id
-  schema.keys.each do |column|
-    print "#{schema[column]}|".cyan
-    table_creation_query += "#{schema[column]},"
-  end
-  puts
-  table_creation_query = table_creation_query[0 .. table_creation_query.size-2]
-  table_creation_query += " );"
-
-  cql_buffer = open_q_file
-
-  cql_buffer.puts table_creation_query
-
-  i = 0  # safety
-
-  File.open(file, "r").each do |line|
-    if i == 1000
-      break
-    end
-    token = line.split(' ')
-
-    if token[1] != nil
-      values = ""
-      schema.keys.each do |ind|
-        if schema[ind] == "date"
-          dtk = token[ind].split('-')
-          token[ind] = d_to_i(dtk[0].to_i, dtk[1].to_i, dtk[2].to_i).to_s
-        end
-        color_print token[ind] , "green"
-        values += "'#{token[ind]}',"
-        print " "
-      end
-      cql_buffer.puts "insert into #{scheme_id} values (#{values[0..values.size-2]});"
-      puts
-    end
-    i += 1
-  end
-
-  cql_buffer.close
-
-  res = %x(sqlite3 "#{$db}/#{scheme_id}.db" < #{$tmp_path_cql})
-  puts res.yellow
-  puts "FINISH".red
-  system "rm #{$tmp_path_cql}"
-end
-
 case ARGV[0]
 when "reg"
-  if ARGV.size < 2
-    abort "arg size not sufficient"
-  end
+  showERR ARGV, 2
   scheme_id = ARGV[1]
   Dir[format_target_dir].each do |file|
-    read_log file, scheme_id  # parse and insert log data into sqlite
+    log_to_database file, scheme_id, $schema  # parse and insert log data into sqlite
   end
 when "see" # see scheme id or query(advanced)
-  if ARGV.size < 2
-    abort "arg size not sufficient"
-  end
+  showERR ARGV, 2
   scheme_id = ARGV[1]
-  f = File.open($tmp_path_cql, "w")
-  f.puts "select * from #{scheme_id};"
-  f.close
-  res = %x(sqlite3 "#{$db}/#{scheme_id}.db" < #{$tmp_path_cql})
-  puts res.yellow
+    res = get_data $tmp_path_cql, scheme_id, $db
+    puts res.yellow
 else
-  abort "#{ARGV[0]} does not exist.".red
+  scheme_id = ARGV[1]
+  formula_id = ARGV[0]
+
+  if ARGV.size < 2
+    abort "argument size not sufficient."
+  end
+
+  File.open("#{$schema}/#{scheme_id}.schema", "r").each do |line|
+    line = line.chomp.strip
+    if line.start_with?(formula_id.strip)
+      analyze line, scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql
+    end
+  end
 end
 
 
