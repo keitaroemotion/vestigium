@@ -1,16 +1,24 @@
 require 'rubygems'
-require 'sequel'
 require 'colorize'
 require '/usr/local/etc/vestigium/date_tool'
 
-DB = Sequel.sqlite
+$sqldir = "/usr/local/etc/vestigium/query"
+$tmp_path_cql = "#{$sqldir}/tmp.cql"
 
-puts d_to_i(2012,4,4).to_s.red
+def open_q_file()
+  if File.directory?($sqldir) == false
+    system "mkdir -p #{$sqldir}"
+  end
+  return File.open($tmp_path_cql, "w")
+end
 
-$schema_config = ""
-
-# read schema
-
+def exe_query(queries, scheme_id)
+  f = open_q_file
+  do_query f, queries
+  f.close
+  res = %x(sqlite3 "#{scheme_id}.db" < #{$tmp_path_cql} )
+  puts res
+end
 
 =begin
 # create an items table

@@ -8,6 +8,10 @@ if File.directory?(dest_dir) == false
   system "mkdir -p #{dest_dir}"
 end
 
+if File.directory?("#{dest_dir}/db") == false
+  system "mkdir -p #{dest_dir}/db"
+end
+
 libs = Array.new
 
 libs.push "lib/controller.rb"
