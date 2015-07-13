@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+
+#system "sudo gem install sequel"
+
+dest_dir = "/usr/local/etc/vestigium"
+
+if File.directory?(dest_dir) == false
+  system "mkdir -p #{dest_dir}"
+end
+
+libs = Array.new
+
+libs.push "lib/controller.rb"
+libs.push "lib/date_tool.rb"
+libs.push "data/config"
+libs.push "data/schema"
+
+main_name  = "vest"
+main_dest  = "/usr/local/bin/#{main_name}"
+
+
+system "cp #{main_name} #{main_dest}"
+
+libs.each do |lib|
+  system "cp #{lib} #{dest_dir}"
+end

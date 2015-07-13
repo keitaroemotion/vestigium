@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+
+require 'colorize'
+require '/usr/local/etc/vestigium/controller.rb'
+
+# import log with File.IO
+
+# Read from target directory
+
+# Read target directory from config
+
+$config = "/usr/local/etc/vestigium/config"
+
+def file_to_map(config_path)
+  hash = Hash.new
+  File.open(config_path, "r").each do |line|
+    if line.include? "="
+      tokens = line.split('=')
+      hash[tokens[0].strip.chomp] = tokens[1].strip.chomp
+    end
+  end
+  return hash
+end
+
+$config = file_to_map $config
+
+$target_dir = $config["target_dir"]
+
+def format_target_dir()
+  return "#{$target_dir}/*".gsub("//","/")
+end
+
+def read_log(file)
+  i = 0  # safety
+  File.open(file, "r").each do |line|
+    if i == 10
+      break
+    end
+    token = line.split(',')
+    puts token[0]
+    i += 1
+  end
+  puts "FINISH".red
+end
+
+
+Dir[format_target_dir].each do |file|
+  read_log file
+end
+
+
+
+#File.open()
+
+
