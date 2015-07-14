@@ -6,6 +6,8 @@ $sqldir = "/usr/local/etc/vestigium/query"
 $schemadir = "/usr/local/etc/vestigium/schema"
 $tmp_path_cql = "#{$sqldir}/tmp.cql"
 
+
+
 def reflect_schema(schema_id, schema, key_index_est=true)
   schemainfo = Hash.new
   schema_path = "#{$schemadir}/#{schema_id}.schema"
@@ -91,7 +93,8 @@ def get_data(tmp, scheme_id, db, where="")
   f = File.open(tmp, "w")
   f.puts "select * from #{scheme_id} #{where};"
   f.close
-  return %x(sqlite3 "#{db}/#{scheme_id}.db" < #{tmp})
+  res =  %x(sqlite3 "#{db}/#{scheme_id}.db" < #{tmp})
+  return res.chomp.split("\n")
 end
 
 def open_q_file()

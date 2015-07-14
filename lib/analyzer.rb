@@ -1,4 +1,6 @@
 require '/usr/local/etc/vestigium/math/average'
+require '/usr/local/etc/vestigium/math/median'
+require '/usr/local/etc/vestigium/math/standard_deviation'
 
 def analyze(oper, scheme_id, schema, tmp)
   formula = oper.split('|')[1]
@@ -12,10 +14,16 @@ def analyze(oper, scheme_id, schema, tmp)
   args = tokens[1..tokens.size]
 
   case function
-  when "aver"
+  when "aver" # means
     res = get_average function, args, tmp, scheme_id
     print "#{formula.green} : "
     puts res.to_s.cyan
+  when "sdev" # standard deviation
+    print "#{formula.green} : "
+    puts get_standard_deviation(function, args, tmp, scheme_id).to_s.yellow
+  when "median"
+    print "#{formula.green} : "
+    puts get_median(function, args, tmp, scheme_id).to_s.yellow
   else
     abort "oper does not exist!"
   end

@@ -1,21 +1,8 @@
- def get_average(function, args, tmp, scheme_id)
-   aver = 0
-   target_index =  args[0] # date
+require '/usr/local/etc/vestigium/utility'
 
-   count = 0
-
-   get_table_schema(tmp, scheme_id, $db).chomp.split("\n").each do |line|
-     if line.split('|')[1].strip.chomp == target_index.strip.chomp
-       break
-     end
-     count += 1
-   end
-
-   bank = get_data(tmp, scheme_id, $db).chomp.split("\n")
-   bank.each do |line|
-     aver += line.split("|")[count].to_f
-   end
-   aver /= bank.size
-   return aver
+def get_average(function, args, tmp, scheme_id)
+  target_colname =  args[0] # date
+  count = get_keyindex_in_table tmp, scheme_id, target_colname
+  bank = get_data(tmp, scheme_id, $db)
+  return get_sum(bank, count) / bank.size
 end
-

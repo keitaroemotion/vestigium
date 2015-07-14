@@ -1,0 +1,5 @@
+schema | date 0 | httpstatus 6 | process_time 9 |
+aver | aver process_time
+sdev | sdev process_time
+median | median process_time
+sdev2 | sdev httpstatus
