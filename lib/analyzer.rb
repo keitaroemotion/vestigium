@@ -14,7 +14,7 @@ def analyze(oper, scheme_id, schema, tmp)
   args = tokens[1..tokens.size]
 
   case function
-  when "aver" # means
+  when "mean" # means
     res = get_average function, args, tmp, scheme_id
     print "#{formula.green} : "
     puts res.to_s.cyan
@@ -24,6 +24,8 @@ def analyze(oper, scheme_id, schema, tmp)
   when "median"
     print "#{formula.green} : "
     puts get_median(function, args, tmp, scheme_id).to_s.yellow
+  when "filter"
+
   else
     abort "oper does not exist!"
   end

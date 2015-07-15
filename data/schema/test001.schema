@@ -1,5 +1,11 @@
 schema | date 0 | httpstatus 6 | process_time 9 |
-aver | aver process_time
+mean | mean process_time
 sdev | sdev process_time
 median | median process_time
 sdev2 | sdev httpstatus
+filt |filter > 50 count process_time
+# count ... just return the number of the filtered data
+# (date,httpstatus) ... show the dates and httpstatus of the filtered data.
+# raw   ... show raw data of filtered data
+
+=>  mean, sdev, median, sdev2

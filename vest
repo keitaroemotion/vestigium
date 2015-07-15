@@ -34,6 +34,34 @@ when "see" # see scheme id or query(advanced)
   scheme_id = ARGV[1]
     res = get_data $tmp_path_cql, scheme_id, $db
     puts res.yellow
+when "run" #auto run
+  $lines = Hash.new
+  def get_commands(scheme_id)
+    commands = Array.new
+    File.open("#{$schema}/#{scheme_id}.schema", "r").each do |line|
+      line = line.chomp.strip
+      if line.include? "|"
+        lsp = line.split "|"
+        $lines[lsp[0].strip.chomp] = lsp[1].chomp.strip
+      end
+      if line.start_with? "=>"
+        line.strip.gsub("=>","").split(',').each do |com|
+          if com != nil
+            commands.push com.strip
+          end
+        end
+      end
+    end
+    return commands
+  end
+  scheme_id = ARGV[1]
+  formula_ids = get_commands scheme_id
+  $lines.keys.each do |key|
+    if formula_ids.include? key.chomp
+      analyze "#{key} | #{$lines[key]}", scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql
+    end
+  end
+
 else
   scheme_id = ARGV[1]
   formula_id = ARGV[0]
@@ -49,6 +77,5 @@ else
     end
   end
 end
-
 
 
