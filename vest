@@ -32,11 +32,13 @@ when "checklog"
   Dir[format_target_dir].each do |file|
     sample_log(file ,$stdin.gets.chomp.to_i)
   end
+when "clear"
+  system "rm -rf #{$db}/*"
 when "reg"
   showERR ARGV, 2
   scheme_id = ARGV[1]
   Dir[format_target_dir].each do |file|
-    log_to_database file, scheme_id, $schema  # parse and insert log data into sqlite
+    log_to_database file, scheme_id, $schema, 1000000  # parse and insert log data into sqlite
   end
 when "schema"
   puts "--- Schema ID List  ---"
