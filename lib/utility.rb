@@ -6,6 +6,14 @@ def get_data_array(data, count)
   return arr
 end
 
+def get_data_array_str(data, count)
+  arr = Array.new
+  data.each do |line|
+    arr.push line.split("|")[count]
+  end
+  return arr
+end
+
 def get_sum(data, count)
   sum = 0
   data.each do |line|

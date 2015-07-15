@@ -7,6 +7,11 @@ $schemadir = "/usr/local/etc/vestigium/schema"
 $tmp_path_cql = "#{$sqldir}/tmp.cql"
 
 
+def list_schema()
+  Dir["#{$schemadir}/*"].each do |schema_id|
+    puts schema_id.gsub("#{$schemadir}/","").gsub(".schema","").green
+  end
+end
 
 def reflect_schema(schema_id, schema, key_index_est=true)
   schemainfo = Hash.new
@@ -34,7 +39,26 @@ def reflect_schema(schema_id, schema, key_index_est=true)
   return schemainfo
 end
 
-def log_to_database(file, scheme_id, schema)
+
+def sample_log(file, target_index=10)
+ i = 0
+ File.open(file, "r").each do |line|
+    if i == target_index
+      j = 0
+      line.split(' ').each do |token|
+        print "["
+        print j.to_s.red
+        print "] "
+        puts "#{token}".yellow
+        j += 1
+      end
+      break
+    end
+    i += 1
+  end
+end
+
+def log_to_database(file, scheme_id, schema, limit=1000)
   table_creation_query = "create table #{scheme_id} ( "
   schema =  reflect_schema scheme_id, schema
   schema.keys.each do |column|
@@ -52,7 +76,7 @@ def log_to_database(file, scheme_id, schema)
   i = 0  # safety
 
   File.open(file, "r").each do |line|
-    if i == 1000
+    if i == limit
       break
     end
     token = line.split(' ')

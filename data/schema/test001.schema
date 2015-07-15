@@ -1,11 +1,16 @@
-schema | date 0 | httpstatus 6 | process_time 9 |
+schema | date 0 | httpstatus 6 | process_time 9 | ip 10 |
 mean | mean process_time
 sdev | sdev process_time
 median | median process_time
 sdev2 | sdev httpstatus
 filt |filter > 50 count process_time
+filt2|filter > 150 count process_time
+filt3 |filter > 50 (date,httpstatus) process_time
+filt4 |filter > 50 raw process_time
+ip1 | mode 3 ip
+mode_proc | mode 4 process_time
 # count ... just return the number of the filtered data
 # (date,httpstatus) ... show the dates and httpstatus of the filtered data.
 # raw   ... show raw data of filtered data
 
-=>  mean, sdev, median, sdev2
+=>  mean, sdev, median, sdev2, filt, filt2, ip1, mode_proc

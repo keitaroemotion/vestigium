@@ -23,11 +23,32 @@ def format_target_dir()
 end
 
 case ARGV[0]
+when "checklog"
+  puts "--- Schema ID List  ---"
+  list_schema
+  print "choose the schema id: "
+  schema_id = $stdin.gets.chomp
+  print "target index? : "
+  Dir[format_target_dir].each do |file|
+    sample_log(file ,$stdin.gets.chomp.to_i)
+  end
 when "reg"
   showERR ARGV, 2
   scheme_id = ARGV[1]
   Dir[format_target_dir].each do |file|
     log_to_database file, scheme_id, $schema  # parse and insert log data into sqlite
+  end
+when "schema"
+  puts "--- Schema ID List  ---"
+  list_schema
+  print "choose the schema id: "
+  schema_id = $stdin.gets.chomp
+  schema = reflect_schema(schema_id, $schema)
+  schema.keys.each do |key|
+    print "[ "
+    print key.to_s.red
+    print " ] "
+    puts schema[key].yellow
   end
 when "see" # see scheme id or query(advanced)
   showERR ARGV, 2
@@ -55,6 +76,12 @@ when "run" #auto run
     return commands
   end
   scheme_id = ARGV[1]
+  if scheme_id == nil
+    puts "--- Schema ID List  ---"
+    list_schema
+    print "choose the schema id: "
+    scheme_id = $stdin.gets.chomp
+  end
   formula_ids = get_commands scheme_id
   $lines.keys.each do |key|
     if formula_ids.include? key.chomp
