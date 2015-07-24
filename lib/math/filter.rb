@@ -22,7 +22,7 @@ def filter(function, args, tmp, scheme_id)
   funct = args[2]
   keyword = args[3]
 
-  keyindex = get_keyindex_in_table tmp, scheme_id, keyword
+  keyindex = get_keyindex_in_table tmp, scheme_id, keyword, function
   data_array = get_data_array get_data(tmp, scheme_id, $db), keyindex
   filtered_data = Hash.new
   index = 0
@@ -43,7 +43,7 @@ def filter(function, args, tmp, scheme_id)
     print " ]"
     print " #{funct}".green
     print " : "
-    puts filtered_data.size.to_s.yellow
+    print filtered_data.size.to_s.yellow
   when "raw"
   else
   end

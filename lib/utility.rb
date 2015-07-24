@@ -22,10 +22,11 @@ def get_sum(data, count)
   return sum
 end
 
-def get_keyindex_in_table(tmp, scheme_id, target_colname)
+def get_keyindex_in_table(tmp, scheme_id, target_colname, testkey="")
   count = 0
   if target_colname == nil
-    puts "target colname is Nil ".red
+    print "#{testkey} : ".green
+    print "Test Error! ".red.blink
     return 0
   else
     get_table_schema(tmp, scheme_id, $db).chomp.split("\n").each do |line|
