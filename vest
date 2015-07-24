@@ -22,12 +22,27 @@ def format_target_dir()
   return "#{$target_dir}/*".gsub("//","/")
 end
 
-case ARGV[0]
-when "checklog"
+def get_schema_id
   puts "--- Schema ID List  ---"
   list_schema
   print "choose the schema id: "
   schema_id = $stdin.gets.chomp
+  return schema_id
+end
+
+
+case ARGV[0]
+when "help", "-h"
+  puts
+  puts "vest [checklog]   ... check the actual log info by line"
+  puts "vest [ clear  ]   ... clear the .db file "
+  puts "vest [  reg   ]   ... convert log file into database   "
+  puts "vest [ schema ]   ... check the schema config info "
+  puts "vest [  see   ]   ... enlist all the data in database"
+  puts "vest [  run   ]   ... run the program according to the DSL"
+  puts ""
+when "checklog"
+  schema_id = get_schema_id
   print "target index? : "
   Dir[format_target_dir].each do |file|
     sample_log(file ,$stdin.gets.chomp.to_i)
@@ -35,16 +50,16 @@ when "checklog"
 when "clear"
   system "rm -rf #{$db}/*"
 when "reg"
-  showERR ARGV, 2
+  showERR ARGV, 1
   scheme_id = ARGV[1]
+  if scheme_id == nil
+    scheme_id = get_schema_id
+  end
   Dir[format_target_dir].each do |file|
-    log_to_database file, scheme_id, $schema, 1000000  # parse and insert log data into sqlite
+    log_to_database file, scheme_id, $schema, 1000  # parse and insert log data into sqlite
   end
 when "schema"
-  puts "--- Schema ID List  ---"
-  list_schema
-  print "choose the schema id: "
-  schema_id = $stdin.gets.chomp
+  schema_id = get_schema_id
   schema = reflect_schema(schema_id, $schema)
   schema.keys.each do |key|
     print "[ "
@@ -53,10 +68,15 @@ when "schema"
     puts schema[key].yellow
   end
 when "see" # see scheme id or query(advanced)
-  showERR ARGV, 2
+  showERR ARGV, 1
   scheme_id = ARGV[1]
-    res = get_data $tmp_path_cql, scheme_id, $db
-    puts res.yellow
+  if scheme_id == nil
+    scheme_id = get_schema_id
+  end
+  res = get_data $tmp_path_cql, scheme_id, $db
+  puts "--------------------------------------".yellow
+  puts res
+  puts "--------------------------------------".yellow
 when "run" #auto run
   $lines = Hash.new
   def get_commands(scheme_id)
@@ -79,10 +99,7 @@ when "run" #auto run
   end
   scheme_id = ARGV[1]
   if scheme_id == nil
-    puts "--- Schema ID List  ---"
-    list_schema
-    print "choose the schema id: "
-    scheme_id = $stdin.gets.chomp
+    scheme_id = get_schema_id
   end
   formula_ids = get_commands scheme_id
   $lines.keys.each do |key|
