@@ -1,4 +1,6 @@
 schema | date 0 | httpstatus 6 | process_time 9 | ip 10 |
+
+filtc | filter == '200' httpstatus
 mean | mean process_time
 sdev | sdev process_time
 median | median process_time
@@ -13,4 +15,4 @@ mode_proc | mode 4 process_time
 # (date,httpstatus) ... show the dates and httpstatus of the filtered data.
 # raw   ... show raw data of filtered data
 
-=>  mean, sdev, median, sdev2, filt, filt2, ip1, mode_proc
+=>  mean, sdev, median, sdev2, filt, filt2, ip1, mode_proc, filtc

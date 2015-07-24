@@ -24,13 +24,18 @@ end
 
 def get_keyindex_in_table(tmp, scheme_id, target_colname)
   count = 0
-  get_table_schema(tmp, scheme_id, $db).chomp.split("\n").each do |line|
-    if line.split('|')[1].strip.chomp == target_colname.strip.chomp
-      break
+  if target_colname == nil
+    puts "target colname is Nil ".red
+    return 0
+  else
+    get_table_schema(tmp, scheme_id, $db).chomp.split("\n").each do |line|
+      if ((line.split('|')[1].strip.chomp == target_colname.strip.chomp))
+        break
+      end
+      count += 1
     end
-    count += 1
+    return count
   end
-  return count
 end
 
 
