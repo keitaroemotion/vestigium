@@ -18,6 +18,14 @@ def get_where(extra_queries)
         where += "#{elem},"
       end
       return where[0..where.size-2]
+    elsif extra_queries.has_key? "dispatch_by"
+      exq = extra_queries["dispatch_by"]
+      where = ""
+      tmp = "where #{exq[0]}="
+      exq[1..exq.size-1].each do |e|
+        where += "#{tmp}'#{e}'$"
+      end
+      return where[0..where.size-1]
     elsif extra_queries.has_key? "filter"
       where = "where "
       extra_queries["filter"].each do |elem|
@@ -59,9 +67,6 @@ def reflect_schema(schema_id, schema, key_index_est=true)
    if schema_flag == true
      if line.include?("|")
        line = line.gsub("|","").strip.split(' ')
-       line.each do |x|
-         print "#{x},".red
-       end
        value =  line[0]
        key = line[1].to_i
        if value.start_with? '('
@@ -247,15 +252,30 @@ def get_table_schema(scheme_id, target_colname)
 end
 
 def get_q_ret(tmp, scheme_id, db, query, settings=nil)
+  # for where
+  res = Array.new
+  if query.include? "$"
+    qsp = query.split('where')
+    qsp[1..qsp.size-1].each do |q|
+      query = "#{qsp[0]} where #{q};".gsub('$','').gsub(";;",";")
+      print "[Query] "
+      puts query.magenta
+      res.push %x(mysql --user=vest --pass=vest -e "#{query}")
+    end
+    return res
+  end
+
+
   if ((settings != nil) && (settings["query"] == "yes"))
     print "[Query] "
     puts query.magenta
   end
-  res = %x(mysql --user=vest --pass=vest -e "#{query}")
+  res.push %x(mysql --user=vest --pass=vest -e "#{query}")
   if ((settings != nil) && (settings["result"] == "yes"))
     puts res.green
   end
-  return res.chomp.split("\n")
+  return res
+  #return res.chomp.split("\n")
 end
 
 =begin

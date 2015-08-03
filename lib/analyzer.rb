@@ -61,14 +61,17 @@ def analyze(oper, scheme_id, schema, tmp, settings=nil)
     case function
     when "mean" # means
       res = get_average(function, args, tmp, scheme_id, extra_queries, settings)
-      print "["
-      print "Result".blink
-      print "] "
-      res.each do |line|
-        if line[0] != ""
-          print "#{line[0]} ".red
+      if res != 0
+        print "["
+        print "Result".blink
+        print "] "
+        puts
+        res.each do |line|
+          if line[0] != ""
+            print "  #{line[0]} ".red
+          end
+          puts line[1].to_s.cyan
         end
-        puts line[1].to_s.cyan
       end
     when "sdev" # standard deviation
       print "#{formula.green} : "

@@ -20,8 +20,10 @@
 filtc | filter == '200' httpstatus
 mean1 | mean process_time
 mean2 | mean process_time (group_by method,appname, api_server)
-mean4 | mean process_time (group_by method)
 mean5 | mean process_time (filter httpstatus='200')
+
+
+getput_mean | mean process_time (dispatch_by method GET PUT )
 
 groupby | groupby process_time
 sdev | sdev process_time
@@ -38,6 +40,6 @@ mode_proc | mode 34 process_time
 # (date,httpstatus) ... show the dates and httpstatus of the filtered data.
 # raw   ... show raw data of filtered data
 
-=> mean1
+=> getput_mean
 #, filt3
 #=>  mean, sdev, median, sdev2, filt, filt2, access_from1, mode_proc, filtc
