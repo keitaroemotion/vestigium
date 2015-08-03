@@ -5,12 +5,15 @@ require '/usr/local/etc/vestigium/controller'
 require '/usr/local/etc/vestigium/date_tool'
 require '/usr/local/etc/vestigium/utility'
 require '/usr/local/etc/vestigium/analyzer'
+require '/usr/local/etc/vestigium/setting'
 
 # import log with File.IO
 # Read from target directory
 # Read target directory from config
 
 $rootdir = "/usr/local/etc/vestigium"
+
+$console_conf = "#{$rootdir}/console"
 $config = "#{$rootdir}/config"
 $schema = "#{$rootdir}/schema"
 $db = "#{$rootdir}/db"
@@ -22,15 +25,6 @@ def format_target_dir()
   return "#{$target_dir}/*".gsub("//","/")
 end
 
-def get_schema_id
-  puts "--- Schema ID List  ---"
-  list_schema
-  print "choose the schema id: "
-  schema_id = $stdin.gets.chomp
-  return schema_id
-end
-
-
 case ARGV[0]
 when "help", "-h"
   puts
@@ -40,7 +34,11 @@ when "help", "-h"
   puts "vest [ schema ]   ... check the schema config info "
   puts "vest [  see   ]   ... enlist all the data in database"
   puts "vest [  run   ]   ... run the program according to the DSL"
+  puts "vest [ esch   ]   ... edit schema "
   puts ""
+when "esch"
+  schema_id = get_schema_id
+  puts "#{$schema}/#{schema_id}.schema"
 when "checklog"
   schema_id = get_schema_id
   print "target index? : "
@@ -48,7 +46,14 @@ when "checklog"
     sample_log(file ,$stdin.gets.chomp.to_i)
   end
 when "clear"
-  system "rm -rf #{$db}/*"
+  schema_id = get_schema_id
+  print "Do you really wanna truncate #{schema_id}? [Y/n] : "
+  if $stdin.gets.chomp.downcase == "y"
+    system "mysql --user=vest --pass=vest -e 'truncate #{schema_id}.#{schema_id}';"
+    puts "Database '#{schema_id}' truncated successfully!".green
+  else
+    puts "Truncation Cancelled! ".red.blink
+  end
 when "reg"
   showERR ARGV, 1
   scheme_id = ARGV[1]
@@ -56,7 +61,7 @@ when "reg"
     scheme_id = get_schema_id
   end
   Dir[format_target_dir].each do |file|
-    log_to_database file, scheme_id, $schema, 1000  # parse and insert log data into sqlite
+    log_to_database file, scheme_id, $schema, 1000000  # parse and insert log data into sqlite
   end
 when "schema"
   schema_id = get_schema_id
@@ -77,40 +82,51 @@ when "see" # see scheme id or query(advanced)
   puts "--------------------------------------".yellow
   puts res
   puts "--------------------------------------".yellow
+when "test"
+  get_schema_id
+when "conf"
+  def conf_activity()
+    print "[register:r] [show:s] [quit:q] : "
+    case $stdin.gets.chomp
+    when "r"
+      write_console_conf
+      conf_activity
+    when "s"
+      show_console_conf
+      conf_activity
+    when "q"
+      abort
+    else
+    end
+  end
+  conf_activity
 when "run" #auto run
   $lines = Hash.new
-  def get_commands(scheme_id)
-    commands = Array.new
-    File.open("#{$schema}/#{scheme_id}.schema", "r").each do |line|
-      line = line.chomp.strip
-      if line.include? "|"
-        lsp = line.split "|"
-        $lines[lsp[0].strip.chomp] = lsp[1].chomp.strip
-      end
-      if line.start_with? "=>"
-        line.strip.gsub("=>","").split(',').each do |com|
-          if com != nil
-            commands.push com.strip
-          end
-        end
-      end
-    end
-    return commands
-  end
   scheme_id = ARGV[1]
   if scheme_id == nil
     scheme_id = get_schema_id
   end
-  formula_ids = get_commands scheme_id
+  res = get_commands scheme_id, $lines
+  formula_ids = res[0]
+  $lines = res[1]
+  settings = read_console_conf ARGV[2..ARGV.size-1]
+
+  i = 0
   $lines.keys.each do |key|
     if formula_ids.include? key.chomp
-      analyze "#{key} | #{$lines[key]}", scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql
+      puts
+      analyze "#{key} | #{$lines[key]}", scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql, settings
+      i = 1
     end
   end
-
+  if i == 0
+    abort "Sorry, you did not specified valuable command.".red
+  end
 else
   scheme_id = ARGV[1]
   formula_id = ARGV[0]
+
+  settings = read_console_conf ARGV[2..ARGV.size-1]
 
   if ARGV.size < 2
     abort "argument size not sufficient."
@@ -119,7 +135,7 @@ else
   File.open("#{$schema}/#{scheme_id}.schema", "r").each do |line|
     line = line.chomp.strip
     if line.start_with?(formula_id.strip)
-      analyze line, scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql
+      analyze line, scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql,settings
     end
   end
 end

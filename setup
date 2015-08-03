@@ -19,7 +19,9 @@ end
 libs = Array.new
 
 libs.push "lib/controller.rb"
+libs.push "lib/controller_helper.rb"
 libs.push "lib/date_tool.rb"
+libs.push "lib/setting.rb"
 libs.push "lib/utility.rb"
 libs.push "lib/analyzer.rb"
 libs.push "data/config"
