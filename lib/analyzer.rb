@@ -18,16 +18,16 @@ def wait(flag=1)
   end
 end
 
-def analyze(oper, scheme_id, schema, tmp, settings=nil)
-  puts
+def analyze(oper, scheme_id, schema, tmp, settings, reports)
+  #puts
   formula = oper.split('|')[1]
   if formula == nil
     abort "formula not implemented.".red
   end
   formula = formula.strip
 
-  print "[Formula] "
-  puts formula.red
+  #print "[Formula] "
+  #puts formula.red
   # find selection word
 
   def get_extra_queries(formula)
@@ -57,56 +57,25 @@ def analyze(oper, scheme_id, schema, tmp, settings=nil)
   function = tokens[0]
   args = tokens[1..tokens.size]
 
-  def print_analysis(function, args, tmp, scheme_id, formula, extra_queries, settings)
+  def print_analysis(function, args, tmp, scheme_id, formula, extra_queries, settings, reports)
     case function
     when "mean" # means
-      res = get_average(function, args, tmp, scheme_id, extra_queries, settings, true)
+      reports[formula] = ["mean", get_average(function, args, tmp, scheme_id, extra_queries, settings, true)]
     when "sdev" # standard deviation
-      print "#{formula.green} : "
-      get_standard_deviation(function, args, tmp, scheme_id, extra_queries, settings).each do |res|
-        print "[#{res[0]}] "
-        print "#{res[1]}\n".yellow
-      end
     when "sum"
-      print "#{formula.green} : "
-      res = get_selected_result(args, tmp, scheme_id, extra_queries, settings, "sum", true)
-      res.keys do |key|
-        puts "[#{key}] #{res[key]}"
-      end
-
+      reports[formula] = ["sum", get_selected_result(args, tmp, scheme_id, extra_queries, settings, "sum", true)]
     when "count"
-      print "#{formula.green} : "
-      res = get_selected_result(args, tmp, scheme_id, extra_queries, settings, "count", true)
-      res.keys do |key|
-        puts "[#{key}] #{res[key]}"
-      end
+      reports[formula] = ["count", get_selected_result(args, tmp, scheme_id, extra_queries, settings, "count", true)]
     when "median"
-      print "#{formula.green} : "
-      print get_median(function, args, tmp, scheme_id).to_s.yellow
+      reports[formula] = ["median", get_median(function, args, tmp, scheme_id, extra_queries, settings, true)]
     when "mode"
-      print "#{formula.green} : "
-      puts
-      c = 0
-      get_mode(function, args, tmp, scheme_id).each do |data|
-        print "  ["
-        if c == 0
-          print data[0].to_s.magenta.swap
-        else
-          print data[0].to_s.magenta
-        end
-        print "] "
-        print data[1].underline.yellow
-        puts
-        c += 1
-      end
     when "filter"
-      filter(function, args, tmp, scheme_id)
+      reports[formula] = ["filter", filter(function, args, tmp, scheme_id)]
     else
-      puts "oper does not exist!".swap.red
-      return
+      #puts "oper does not exist!".swap.red
     end
-    wait
+    return reports
   end
-  print_analysis(function, args, tmp, scheme_id, formula, extra_queries, settings)
+  return print_analysis(function, args, tmp, scheme_id, formula, extra_queries, settings, reports)
 end
 

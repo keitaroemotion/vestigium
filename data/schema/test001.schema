@@ -21,12 +21,12 @@ mean5 | mean process_time (filter httpstatus='200')
 mean1 | mean process_time
 
 
-=> getput_mean, getput_count, getput_sdev
+=> getput_mean, getput_count, getput_sum, getput_sdev
 
-getput_mean  | mean  process_time (dispatch_by method GET PUT )
-getput_count | count process_time (dispatch_by method GET PUT )
-getput_sum   | sum   process_time (dispatch_by method GET PUT )
-getput_sdev  | sdev  process_time (dispatch_by method GET PUT )
+getput_mean  | mean    process_time (dispatch_by method GET PUT )
+getput_count | count   process_time (dispatch_by method GET PUT )
+getput_sum   | sum     process_time (dispatch_by method GET PUT )
+getput_sdev  | median  process_time (dispatch_by method GET PUT )
 
 groupby | groupby process_time
 sdev | sdev process_time

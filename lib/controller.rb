@@ -25,44 +25,49 @@ def get_selected_result(args, tmp, scheme_id, extra_queries, settings, opt, cons
   query = "select #{selection_range} from #{scheme_id}.#{scheme_id} #{where};"
 
   data = Hash.new
-  puts
+  #puts
   sp = where.split("where")
 
   key = ""
   report = Hash.new
 
   if !where.include? "where"
-    sp = [nil, "---"]
-    key = "---"
+    sp = [nil, "Result"]
+    key = "Result"
   end
 
   result = get_q_ret(tmp, scheme_id, $db, query , settings)
 
   (1..sp.size-1).each do |x|
+
+    key = sp[x].gsub("$","")
+
     sum = 0.0
     records = result[x-1].split("\n")
     records.each do |j|
       sum += j.to_f
     end
 
-    if console == true
-      key = sp[x].strip.gsub('$','')
-      #print "[#{key}]\n".yellow
-      #print "  [ Sum ] %-.2f\n" % sum
-      #print "  [Count] %2d\n" % records.size
-    end
     case opt
+    when "median"
+      median = 0
+      arr = Array.new
+      records.each do |e|
+        arr.push e.to_i
+      end
+      arr = arr.sort
+      n = arr.size
+      if arr.size % 2 == 1
+        median = arr[(n-1)/2]
+      else
+        median = (arr[(n/2)-1] + arr[n/2])*0.5
+      end
+      report[key] = [median]
     when "sum"
       report[key] = [sum]
     when "count"
       report[key] = [records.size]
     when "mean"
-      if console
-        print "[#{key}]\n"
-        print "  [Mean]"
-        print "       %-.2f\n".green % (sum/records.size.to_f)
-      end
-      #                 means               total  actual_data
       report[key] = [sum/records.size.to_f, sum, records]
     else
     end
@@ -320,7 +325,7 @@ def get_q_ret(tmp, scheme_id, db, query, settings=nil)
     qsp[1..qsp.size-1].each do |q|
       query = "#{qsp[0]} where #{q};".gsub('$','').gsub(";;",";")
       print "[Query] "
-      puts query.magenta
+      puts query.chomp.magenta
       res.push %x(mysql --user=vest --pass=vest -e "#{query}")
     end
     return res
@@ -337,27 +342,6 @@ def get_q_ret(tmp, scheme_id, db, query, settings=nil)
   return res
 end
 
-=begin
-def get_data(tmp, scheme_id, db, where="")
-  abort "what the fuck".swap.red
-  f = File.open(tmp, "w")
-  puts "query: select * from #{scheme_id} #{where};".yellow
-  query = "select * from #{scheme_id} #{where};"
-  puts query.yellow
-  f.puts query
-  f.close
-  res =  %x(sqlite3 "#{db}/#{scheme_id}.db" < #{tmp})
-  return res.chomp.split("\n")
-end
-=end
 
 
-def exe_query(queries, scheme_id)
-  abort "what the fuck".swap.red
-  f = File.open($tmp_path_cql, "w")
-  do_query f, queries
-  f.close
-  res = %x(sqlite3 "#{scheme_id}.db" < #{$tmp_path_cql} )
-  puts res
-end
 

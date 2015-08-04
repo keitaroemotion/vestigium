@@ -110,18 +110,93 @@ when "run" #auto run
   formula_ids = res[0]
   $lines = res[1]
   settings = read_console_conf ARGV[2..ARGV.size-1]
+  reports = Hash.new
 
   i = 0
   $lines.keys.each do |key|
     if formula_ids.include? key.chomp
-      puts
-      analyze "#{key} | #{$lines[key]}", scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql, settings
+      #puts
+      reports = analyze "#{key} | #{$lines[key]}", scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql, settings, reports
       i = 1
     end
   end
   if i == 0
     abort "Sorry, you did not specified valuable command.".red
   end
+
+  def format_num(num)
+    num = "%.2f" % num
+    nums = num.to_s.split('.')
+    num = nums[0]
+    fraction = nums[1]
+    digit = ""
+    count = 0
+    chars = num.to_s.split('').reverse
+    chars.each do |d|
+      if count == 3
+        digit = "#{d},#{digit}"
+        count = 1
+      else
+        digit = "#{d}#{digit}"
+        count += 1
+      end
+    end
+    digit = "#{digit}.#{fraction}"
+    return digit
+  end
+
+  def display(report)
+    report.each do |elem|
+      vals = Array.new
+      max_val_size = 0
+      elem.keys.each do |e|
+         val = format_num("%.2f" % elem[e][0])
+         if val.size > max_val_size
+           max_val_size = val.size
+         end
+         vals.push [e.green, val]
+      end
+      vals.each do |val|
+        print "#{val[0]} "
+        (0..max_val_size - val[1].size).each do |r|
+          print " "
+        end
+        print "#{val[1].yellow}"
+        puts
+      end
+      #elem.keys.each do |e|
+      #  puts "#{e.green} #{format_num(elem[e][0]).to_s.yellow}"
+      #end
+    end
+  end
+
+  reports.keys.each do |key|
+    print "[#{'Formula'.green}] "
+    print "#{key} ".gsub("  "," ").red
+    opt = reports[key][0]
+    report = reports[key][1..reports[key].size-1]
+    case opt
+    when "sum"
+      print "\n[Sum]\n"
+      display report
+    when "count"
+      print "\n[Count] \n"
+      display report
+    when "median"
+      print "\n[Median] \n"
+      display report
+    when "mean"
+      print "\n[Mean] \n"
+      report.each do |elem|
+        elem.keys.each do |e|
+          puts "#{e.green} %.2f" % elem[e][0]
+        end
+      end
+    else
+    end
+    puts
+  end
+  puts
 else
   scheme_id = ARGV[1]
   formula_id = ARGV[0]
