@@ -57,25 +57,29 @@ def analyze(oper, scheme_id, schema, tmp, settings=nil)
   function = tokens[0]
   args = tokens[1..tokens.size]
 
-  def print_analysis(function, args, tmp, scheme_id, formula, extra_queries, settings=nil)
+  def print_analysis(function, args, tmp, scheme_id, formula, extra_queries, settings)
     case function
     when "mean" # means
-      res = get_average(function, args, tmp, scheme_id, extra_queries, settings)
-      if res != 0
-        print "["
-        print "Result".blink
-        print "] "
-        puts
-        res.each do |line|
-          if line[0] != ""
-            print "  #{line[0]} ".red
-          end
-          puts line[1].to_s.cyan
-        end
-      end
+      res = get_average(function, args, tmp, scheme_id, extra_queries, settings, true)
     when "sdev" # standard deviation
       print "#{formula.green} : "
-      print get_standard_deviation(function, args, tmp, scheme_id).to_s.yellow
+      get_standard_deviation(function, args, tmp, scheme_id, extra_queries, settings).each do |res|
+        print "[#{res[0]}] "
+        print "#{res[1]}\n".yellow
+      end
+    when "sum"
+      print "#{formula.green} : "
+      res = get_selected_result(args, tmp, scheme_id, extra_queries, settings, "sum", true)
+      res.keys do |key|
+        puts "[#{key}] #{res[key]}"
+      end
+
+    when "count"
+      print "#{formula.green} : "
+      res = get_selected_result(args, tmp, scheme_id, extra_queries, settings, "count", true)
+      res.keys do |key|
+        puts "[#{key}] #{res[key]}"
+      end
     when "median"
       print "#{formula.green} : "
       print get_median(function, args, tmp, scheme_id).to_s.yellow
@@ -98,7 +102,8 @@ def analyze(oper, scheme_id, schema, tmp, settings=nil)
     when "filter"
       filter(function, args, tmp, scheme_id)
     else
-      abort "oper does not exist!"
+      puts "oper does not exist!".swap.red
+      return
     end
     wait
   end

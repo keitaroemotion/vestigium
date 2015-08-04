@@ -9,6 +9,67 @@ $repodir = "/usr/local/etc/vestigium/report"
 $schemadir = "/usr/local/etc/vestigium/schema"
 $tmp_path_cql = "#{$sqldir}/tmp.cql"
 
+
+def get_selected_result(args, tmp, scheme_id, extra_queries, settings, opt, console)
+
+  target_colname =  args[0] # date
+  count = get_keyindex_in_table tmp, scheme_id, target_colname
+  where = get_where(extra_queries)
+  selection_range = ""
+  if where.include? "group by"
+    selection_range = where.gsub("group by","")
+    selection_range += ",#{target_colname}, count(*)"
+  else
+    selection_range = target_colname
+  end
+  query = "select #{selection_range} from #{scheme_id}.#{scheme_id} #{where};"
+
+  data = Hash.new
+  puts
+  sp = where.split("where")
+
+  key = ""
+  report = Hash.new
+
+  if !where.include? "where"
+    sp = [nil, "---"]
+    key = "---"
+  end
+
+  result = get_q_ret(tmp, scheme_id, $db, query , settings)
+
+  (1..sp.size-1).each do |x|
+    sum = 0.0
+    records = result[x-1].split("\n")
+    records.each do |j|
+      sum += j.to_f
+    end
+
+    if console == true
+      key = sp[x].strip.gsub('$','')
+      #print "[#{key}]\n".yellow
+      #print "  [ Sum ] %-.2f\n" % sum
+      #print "  [Count] %2d\n" % records.size
+    end
+    case opt
+    when "sum"
+      report[key] = [sum]
+    when "count"
+      report[key] = [records.size]
+    when "mean"
+      if console
+        print "[#{key}]\n"
+        print "  [Mean]"
+        print "       %-.2f\n".green % (sum/records.size.to_f)
+      end
+      #                 means               total  actual_data
+      report[key] = [sum/records.size.to_f, sum, records]
+    else
+    end
+   end
+  return report
+end
+
 def get_where(extra_queries)
   where = ""
   if extra_queries != nil
@@ -265,17 +326,15 @@ def get_q_ret(tmp, scheme_id, db, query, settings=nil)
     return res
   end
 
-
   if ((settings != nil) && (settings["query"] == "yes"))
     print "[Query] "
     puts query.magenta
   end
   res.push %x(mysql --user=vest --pass=vest -e "#{query}")
   if ((settings != nil) && (settings["result"] == "yes"))
-    puts res.green
+    puts res.to_s[1..100].green
   end
   return res
-  #return res.chomp.split("\n")
 end
 
 =begin

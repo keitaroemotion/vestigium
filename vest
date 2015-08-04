@@ -135,7 +135,12 @@ else
   File.open("#{$schema}/#{scheme_id}.schema", "r").each do |line|
     line = line.chomp.strip
     if line.start_with?(formula_id.strip)
-      analyze line, scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql,settings
+      print "execute "
+      print "#{line.split('|')[1]} ".red
+      print "? : [Y/n]  "
+      if $stdin.gets.chomp.downcase == "y"
+        analyze(line, scheme_id, reflect_schema(scheme_id, $schema), $tmp_path_cql,settings)
+      end
     end
   end
 end
