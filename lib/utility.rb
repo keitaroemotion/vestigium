@@ -1,3 +1,52 @@
+def format_num(num)
+  num = "%.2f" % num
+  nums = num.to_s.split('.')
+  num = nums[0]
+  fraction = nums[1]
+  digit = ""
+  count = 0
+  chars = num.to_s.split('').reverse
+  chars.each do |d|
+    if count == 3
+      digit = "#{d},#{digit}"
+      count = 1
+    else
+      digit = "#{d}#{digit}"
+      count += 1
+    end
+  end
+  digit = "#{digit}.#{fraction}"
+  return digit
+end
+
+
+def display(report)
+  report.each do |elem|
+    vals = Array.new
+    max_val_size = 0
+    elem.keys.each do |e|
+       if elem[e][0] != nil
+         val = format_num("%.2f" % elem[e][0])
+         if val.size > max_val_size
+           max_val_size = val.size
+         end
+       else
+         val = "---"
+       end
+       vals.push [e.green, val]
+    end
+    vals.each do |val|
+      print "#{val[0]} "
+      (0..max_val_size - val[1].size).each do |r|
+        print " "
+      end
+      print "#{val[1].yellow}"
+      puts
+    end
+  end
+end
+
+
 def print_timer(t2, t1)
   diff = t1 - t2
   hour = diff/3600

@@ -52,6 +52,10 @@ def get_selected_result(args, tmp, scheme_id, extra_queries, settings, opt, cons
     when "median"
       median = 0
       arr = Array.new
+      if records.size == 0
+        report[key] = ""
+        return report
+      end
       records.each do |e|
         arr.push e.to_i
       end
@@ -78,28 +82,72 @@ end
 def get_where(extra_queries)
   where = ""
   if extra_queries != nil
-    if extra_queries.has_key? "group_by"
-      where = "group by "
-      extra_queries["group_by"].each do |elem|
-        where += "#{elem},"
+    where = ""
+    extra_queries.each do |extra_query|
+      func_key = extra_query[0]
+      if  func_key == "group_by"
+        additional = ""
+        dates = nil
+        if extra_queries.has_key? "interval"
+          args = extra_queries["interval"]
+          tmp_query = "delete from non_filt.non_filt where #{args[0]}='0000-00-00 00:00:00';"
+          tmp_query += "select MAX(#{args[0]}) AS #{args[0]} from non_filt.non_filt;"
+          tmp_query += "select MIN(#{args[0]}) AS #{args[0]} from non_filt.non_filt;"
+
+          dates = Array.new
+
+          %x(mysql --user=vest --pass=vest -e "#{tmp_query}").split("\n").each do |date|
+
+            if date != args[0]
+              dates.push DateTime.strptime(date.strip, '%Y-%m-%d %I:%M:%S')
+            end
+          end
+          dates =  dates.sort
+
+          dfrom = dates[0]
+
+          def add_date_range(dfrom, maxdate, colname, queries)
+            dto = dfrom + Rational(5, 24*60)
+            queries.push " #{colname} BETWEEN '#{dfrom}' AND '#{dto}' "
+              puts "dto: #{dto} maxdate:#{maxdate}".swap
+            if dto < maxdate
+              add_date_range dto, maxdate, colname, queries
+            else
+              return queries
+            end
+          end
+
+          dates = add_date_range dfrom, dates[dates.size-1], args[0], Array.new
+
+        end
+
+        if extra_queries.has_key? "filter"
+          args = extra_queries["filter"]
+          # if args increased, this doesnt help
+          value = ""
+          if args[1].start_with? "!"
+            value = "<>'#{args[1]}'".gsub("!","")
+          else
+            value = "='#{args[1]}'"
+          end
+          additional = "and #{args[0]}#{value}"
+        end
+        tokens = extra_query[1]
+        tmp = "where #{tokens[0]}="
+        puts dates.size.to_s.swap
+        tokens[1..tokens.size-1].each do |e|
+          if dates != nil
+            dates.each do |date|
+              where += "#{tmp}'#{e}' #{additional} and #{date} $"
+            end
+          else
+            where += "#{tmp}'#{e}' #{additional}$"
+          end
+        end
       end
-      return where[0..where.size-2]
-    elsif extra_queries.has_key? "dispatch_by"
-      exq = extra_queries["dispatch_by"]
-      where = ""
-      tmp = "where #{exq[0]}="
-      exq[1..exq.size-1].each do |e|
-        where += "#{tmp}'#{e}'$"
-      end
-      return where[0..where.size-1]
-    elsif extra_queries.has_key? "filter"
-      where = "where "
-      extra_queries["filter"].each do |elem|
-        where += "#{elem} and "
-      end
-      return where[0..where.size-5]
     end
   end
+  puts where.yellow
   return where
 end
 
