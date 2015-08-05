@@ -138,7 +138,7 @@ def get_where(extra_queries)
         tokens[1..tokens.size-1].each do |e|
           if dates != nil
             dates.each do |date|
-              where += "#{tmp}'#{e}' #{additional} and #{date} $"
+             where += "#{tmp}'#{e}' #{additional} and #{date} $"
             end
           else
             where += "#{tmp}'#{e}' #{additional}$"

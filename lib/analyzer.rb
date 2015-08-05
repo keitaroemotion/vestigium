@@ -33,10 +33,10 @@ def analyze(oper, scheme_id, schema, tmp, settings, reports)
   def get_extra_queries(formula)
     extra_queries = Hash.new
     if formula.include? "("
-       formulas = formula.split('(')
-       formula = formulas[0]
-       formulas = formulas[1..formulas.size-1]
-       formulas.each do |extra_func|
+       formulae = formula.split('(')
+       formula = formulae[0]
+       formulae = formulae[1..formulae.size-1]
+       formulae.each do |extra_func|
          extra_func = extra_func.gsub(")","").split(' ')
          extra_args = Array.new
          extra_func[1..extra_func.size-1].each do |elem|
