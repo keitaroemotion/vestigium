@@ -1,0 +1,21 @@
+@schema
+ | (concat (dt 0 1))
+ | httpstatus 6
+ | process_time 9
+ | method 3
+ | appname 4
+ | access_from 10
+ | api_server 5
+
+=> getput_mean_200
+#=> getput_mean_200, getput_count_200, getput_sum_200, getput_sdev_200
+#=> getput_count_n200, getput_sum_n200
+
+getput_mean_200   | mean    process_time (group_by method GET PUT) (filter httpstatus 200) (interval dt 5)
+getput_count_200  | count   process_time (group_by method GET PUT) (filter httpstatus 200)
+getput_sum_200    | sum     process_time (group_by method GET PUT) (filter httpstatus 200)
+getput_median_200   | median  process_time (group_by method GET PUT) (filter httpstatus 200)
+
+getput_count_n200 | count   process_time (group_by method GET PUT) (filter httpstatus !200)
+getput_sum_n200   | sum     process_time (group_by method GET PUT) (filter httpstatus !200)
+

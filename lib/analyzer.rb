@@ -26,10 +26,6 @@ def analyze(oper, scheme_id, schema, tmp, settings, reports)
   end
   formula = formula.strip
 
-  #print "[Formula] "
-  #puts formula.red
-  # find selection word
-
   def get_extra_queries(formula)
     extra_queries = Hash.new
     if formula.include? "("

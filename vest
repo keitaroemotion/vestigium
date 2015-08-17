@@ -37,16 +37,16 @@ when "help", "-h"
   puts "vest [ esch   ]   ... edit schema "
   puts ""
 when "esch"
-  schema_id = get_schema_id
+  schema_id = get_schema_id ARGV[1]
   puts "#{$schema}/#{schema_id}.schema"
 when "checklog"
-  schema_id = get_schema_id
+  schema_id = get_schema_id ARGV[1]
   print "target index? : "
   Dir[format_target_dir].each do |file|
     sample_log(file ,$stdin.gets.chomp.to_i)
   end
 when "clear"
-  schema_id = get_schema_id
+  schema_id = get_schema_id ARGV[1]
   print "Do you really wanna truncate #{schema_id}? [Y/n] : "
   if $stdin.gets.chomp.downcase == "y"
     system "mysql --user=vest --pass=vest -e 'truncate #{schema_id}.#{schema_id}';"
@@ -55,16 +55,12 @@ when "clear"
     puts "Truncation Cancelled! ".red.blink
   end
 when "reg"
-  showERR ARGV, 1
-  scheme_id = ARGV[1]
-  if scheme_id == nil
-    scheme_id = get_schema_id
-  end
+  scheme_id = get_schema_id ARGV[1]
   Dir[format_target_dir].each do |file|
     log_to_database file, scheme_id, $schema, 1000000  # parse and insert log data into sqlite
   end
 when "schema"
-  schema_id = get_schema_id
+  schema_id = get_schema_id ARGV[1]
   schema = reflect_schema(schema_id, $schema)
   schema.keys.each do |key|
     print "[ "
@@ -73,11 +69,7 @@ when "schema"
     puts schema[key].yellow
   end
 when "see" # see scheme id or query(advanced)
-  showERR ARGV, 1
-  scheme_id = ARGV[1]
-  if scheme_id == nil
-    scheme_id = get_schema_id
-  end
+  scheme_id = get_schema_id ARGV[1]
   res = get_data $tmp_path_cql, scheme_id, $db
   puts "--------------------------------------".yellow
   puts res
@@ -100,12 +92,10 @@ when "conf"
     end
   end
   conf_activity
-when "run" #auto run
+
+when "run"
   $lines = Hash.new
-  scheme_id = ARGV[1]
-  if scheme_id == nil
-    scheme_id = get_schema_id
-  end
+  scheme_id = get_schema_id ARGV[1]
   res = get_commands scheme_id, $lines
   formula_ids = res[0]
   $lines = res[1]
@@ -140,17 +130,90 @@ when "run" #auto run
       print "\n[Median] \n"
       display report
     when "mean"
+
       print "\n[Mean] \n"
+      puts report[0].class.to_s.red
+      label =  report[0].keys[0]
+
+      # field area
+      fields = Array.new
+      label.split("and").each do |elem|
+        if elem.include? '='
+          elem = elem.split('=')[0].gsub(" ","")
+        elsif elem.include? "BETWEEN"
+          elem = elem.split("BETWEEN")[0].gsub(" ","")
+        end
+        if !elem.include? "-"
+          fields.push [elem, "cyan"]
+        end
+      end
+
+      def console_disp(fields, contents)
+        fields.each do |f|
+          print "#{f[0]} |".cyan
+        end
+        puts
+
+        def print_c(val, col)
+          case col
+          when "cyan"
+            print val.cyan
+          when "red"
+            print val.red
+          when "yellow"
+            print val.yellow
+          when "white"
+            print val.white
+          else
+            print val
+          end
+        end
+
+        contents.each do |c|
+          print_c "#{c[0]}", c[1]
+        end
+      end
+
+      contents = Array.new
+
       report.each do |elem|
         elem.keys.each do |e|
-          puts "#{e.green} %.2f" % elem[e][0]
+          e.split("and").each do |x|
+            if x.include? '='
+              x = x.split('=')[1].gsub(" ","")
+            end
+            if x.include? "BETWEEN"
+              x = x.split("BETWEEN")[1]
+              x.split(' ').each do |elem|
+                if elem.include? "+"
+                  #print "#{elem.split('+')[0].gsub('\'','')} ".red
+                  contents.push ["#{elem.split('+')[0].gsub('\'','')} ", "red"]
+                else
+                  contents.push ["#{elem} ", "white"]
+                  #print "#{elem} "
+                end
+              end
+            else
+              contents.push ["#{x.gsub('\'','')} ", "yellow"]
+              #print "#{x.gsub('\'','')} ".yellow
+            end
+            #print "|".green
+          end
+          #puts "%.2f" % elem[e][0]
+          contents.push ["%.2f" % elem[e][0], "white"]
+          contents.push "\n"
         end
       end
     else
     end
-    puts
+    contents.push "\n"
+    #puts
+    console_disp fields, contents
   end
-  puts
+  #puts
+
+
+
 else
   scheme_id = ARGV[1]
   formula_id = ARGV[0]

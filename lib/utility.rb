@@ -60,29 +60,32 @@ def print_timer(t2, t1)
   return "#{hour}#{min.to_i} min #{sec.to_i} sec ".chomp
 end
 
-def get_schema_id
-  puts "--- Schema ID List  ---"
-  list_schema
-  print "choose the schema id: "
-  schema_id = $stdin.gets.chomp
-  if File.exist?("#{$schema}/#{schema_id}.schema") == true
-    return schema_id
-  else
-    Dir["#{$schema}/*"].each do |file|
-      file_name = file.gsub("#{$schema}/","").gsub(".schema","")
-      if file_name.start_with? schema_id
-        print "You want to use "
-        print "#{file_name} ".green
-        print "? [Y/n] : "
-        if  $stdin.gets.chomp.downcase == "y"
-          return file_name
-        else
+def get_schema_id(default_arg)
+  if default_arg == nil
+    puts "--- Schema ID List  ---"
+    list_schema
+    print "choose the schema id: "
+    schema_id = $stdin.gets.chomp
+    if File.exist?("#{$schema}/#{schema_id}.schema") == true
+      return schema_id
+    else
+      Dir["#{$schema}/*"].each do |file|
+        file_name = file.gsub("#{$schema}/","").gsub(".schema","")
+        if file_name.start_with? schema_id
+          print "You want to use "
+          print "#{file_name} ".green
+          print "? [Y/n] : "
+          if  $stdin.gets.chomp.downcase == "y"
+            return file_name
+          else
+          end
         end
       end
     end
+    return schema_id
+  else
+    return default_arg
   end
-
-  return schema_id
 end
 
 def get_commands(scheme_id, lines)
